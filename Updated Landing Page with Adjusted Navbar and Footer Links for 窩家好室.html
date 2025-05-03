@@ -1,0 +1,1167 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>窩家好室 - 安心託付，穩定收租</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background-color: #F5E9DC;
+      color: #2C2C2C;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* 導航欄 */
+    .navbar {
+      background-color: #2C2C2C;
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .navbar__list {
+      display: flex;
+      justify-content: flex-end; /* 靠右對齊 */
+      gap: 20px; /* 縮小間距，保持整齊 */
+      padding-right: 20px; /* 右側內邊距 */
+    }
+
+    .navbar__link {
+      color: #DCC3A1;
+      text-decoration: none;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      font-size: 0.9em; /* 縮小字體 */
+      transition: color 0.3s ease, transform 0.3s ease;
+    }
+
+    .navbar__link:hover {
+      color: #fff;
+      transform: translateY(-2px);
+    }
+
+    /* Hero 區塊 */
+    .hero {
+      background: linear-gradient(to bottom, #DCC3A1, #F5E9DC);
+      padding: 80px 0;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(50px);
+      animation: fadeInUp 1s ease forwards;
+    }
+
+    .hero__logo {
+      max-width: 250px;
+      margin-bottom: 20px;
+    }
+
+    .hero__title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2.8em;
+      font-weight: 700;
+      color: #2C2C2C;
+      margin-bottom: 10px;
+    }
+
+    .hero__subtitle {
+      font-size: 1.5em;
+      color: #2C2C2C;
+      margin-bottom: 30px;
+    }
+
+    .hero__cta {
+      background-color: #2C2C2C;
+      color: #DCC3A1;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 5px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    .hero__cta:hover {
+      background-color: #444;
+      transform: scale(1.05);
+    }
+
+    /* 關於我們 */
+    .about {
+      padding: 100px 0;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(50px);
+      animation: fadeInUp 1s ease forwards;
+      animation-delay: 0.2s;
+      background: url('https://i.imgur.com/MBRDPKT.jpg') no-repeat center/cover;
+      position: relative;
+      min-height: 600px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .about::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      border-radius: 10px;
+    }
+
+    .about__title,
+    .about__content {
+      position: relative;
+      z-index: 1;
+      color: #fff;
+    }
+
+    .about__title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 3em;
+      font-weight: 700;
+      margin-bottom: 30px;
+      position: relative;
+    }
+
+    .about__title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 3px;
+      background-color: #DCC3A1;
+    }
+
+    .about__content {
+      max-width: 900px;
+      margin: 0 auto;
+      font-size: 1.4em;
+      color: #f5f5f5;
+      line-height: 1.8;
+    }
+
+    /* 服務項目 */
+    .services {
+      padding: 100px 0;
+      opacity: 0;
+      transform: translateY(50px);
+      animation: fadeInUp 1s ease forwards;
+      animation-delay: 0.4s;
+      background: url('https://i.imgur.com/MBRDPKT.jpg') no-repeat center/cover;
+      position: relative;
+      min-height: 600px;
+    }
+
+    .services::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+    }
+
+    .services__title,
+    .services__grid {
+      position: relative;
+      z-index: 1;
+    }
+
+    .services__title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 3em;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 50px;
+      position: relative;
+      color: #fff;
+    }
+
+    .services__title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 3px;
+      background-color: #DCC3A1;
+    }
+
+    .services__grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+    }
+
+    .services__item {
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 40px;
+      border-radius: 10px;
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .services__item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .services__icon {
+      font-size: 3em;
+      color: #DCC3A1;
+      margin-bottom: 20px;
+    }
+
+    .services__item-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.8em;
+      font-weight: 700;
+      margin-bottom: 15px;
+    }
+
+    .services__item-desc {
+      font-size: 1.2em;
+      color: #444;
+    }
+
+    /* 客戶推薦 */
+    .testimonials {
+      padding: 60px 0;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(50px);
+      animation: fadeInUp 1s ease forwards;
+      animation-delay: 0.6s;
+    }
+
+    .testimonials__title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2.5em;
+      font-weight: 700;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .testimonials__title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 3px;
+      background-color: #DCC3A1;
+    }
+
+    .testimonials__carousel {
+      position: relative;
+      max-width: 800px;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+
+    .testimonials__slides {
+      display: flex;
+      transition: transform 0.5s ease;
+    }
+
+    .testimonials__slide {
+      min-width: 100%;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .testimonials__avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 0 auto 15px;
+    }
+
+    .testimonials__name {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.3em;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .testimonials__quote {
+      font-size: 1.1em;
+      color: #444;
+    }
+
+    .testimonials__nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: #DCC3A1;
+      color: #2C2C2C;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background-color 0.3s ease;
+    }
+
+    .testimonials__nav--prev {
+      left: 10px;
+    }
+
+    .testimonials__nav--next {
+      right: 10px;
+    }
+
+    .testimonials__nav:hover {
+      background-color: #2C2C2C;
+      color: #DCC3A1;
+    }
+
+    /* 成功案例 */
+    .case-studies {
+      padding: 60px 0;
+      background-color: #F5E9DC;
+      opacity: 0;
+      transform: translateY(50px);
+      animation: fadeInUp 1s ease forwards;
+      animation-delay: 0.8s;
+    }
+
+    .case-studies__title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2.5em;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .case-studies__title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 3px;
+      background-color: #DCC3A1;
+    }
+
+    .case-studies__grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+    }
+
+    .case-studies__item {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .case-studies__item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .case-studies__image {
+      width: 100%;
+      height: auto;
+      max-height: 300px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+
+    .case-studies__item-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.3em;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .case-studies__item-desc {
+      font-size: 1em;
+      color: #444;
+    }
+
+    /* 常見問題 */
+    .faq {
+      padding: 60px 0;
+      background-color: #fff;
+      opacity: 0;
+      transform: translateY(50px);
+      animation: fadeInUp 1s ease forwards;
+      animation-delay: 1s;
+    }
+
+    .faq__title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2.5em;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .faq__title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 3px;
+      background-color: #DCC3A1;
+    }
+
+    .faq__item {
+      margin-bottom: 15px;
+      border-bottom: 1px solid #DCC3A1;
+    }
+
+    .faq__question {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.2em;
+      font-weight: 700;
+      padding: 15px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .faq__answer {
+      font-size: 1em;
+      color: #444;
+      padding: 0 15px 15px;
+      display: none;
+    }
+
+    .faq__item--active .faq__answer {
+      display: block;
+    }
+
+    .faq__toggle {
+      font-size: 1.2em;
+      transition: transform 0.3s ease;
+    }
+
+    .faq__item--active .faq__toggle {
+      transform: rotate(45deg);
+    }
+
+    /* 聯絡我們 */
+    .contact {
+      padding: 60px 0;
+      background-color: #F5E9DC;
+      opacity: 0;
+      transform: translateY(50px);
+      animation: fadeInUp 1s ease forwards;
+      animation-delay: 1.2s;
+    }
+
+    .contact__title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2.5em;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .contact__title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 3px;
+      background-color: #DCC3A1;
+    }
+
+    .contact__form {
+      display: flex;
+      flex-direction: column;
+      max-width: 600px;
+      margin: 0 auto 30px;
+    }
+
+    .contact__input,
+    .contact__textarea {
+      margin: 10px 0;
+      padding: 15px;
+      border: 1px solid #2C2C2C;
+      border-radius: 5px;
+      font-size: 1em;
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    .contact__textarea {
+      resize: none;
+      height: 150px;
+    }
+
+    .contact__submit {
+      background-color: #2C2C2C;
+      color: #DCC3A1;
+      padding: 15px;
+      border: none;
+      border-radius: 5px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    .contact__submit:hover {
+      background-color: #444;
+      transform: scale(1.05);
+    }
+
+    .contact__appointment {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .contact__appointment h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.5em;
+      margin-bottom: 15px;
+    }
+
+    .contact__appointment form {
+      display: flex;
+      flex-direction: column;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .contact__social {
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .contact__social-link {
+      color: #2C2C2C;
+      font-size: 2em;
+      transition: color 0.3s ease;
+    }
+
+    .contact__social-link:hover {
+      color: #DCC3A1;
+    }
+
+    /* 地圖嵌入 */
+    .map {
+      padding: 60px 0;
+      background-color: #fff;
+      opacity: 0;
+      transform: translateY(50px);
+      animation: fadeInUp 1s ease forwards;
+      animation-delay: 1.4s;
+    }
+
+    .map__title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2.5em;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .map__title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 3px;
+      background-color: #DCC3A1;
+    }
+
+    .map__iframe {
+      width: 100%;
+      height: 400px;
+      border: 0;
+      border-radius: 10px;
+    }
+
+    /* 新聞與更新 */
+    .news {
+      padding: 60px 0;
+      background-color: #F5E9DC;
+      opacity: 0;
+      transform: translateY(50px);
+      animation: fadeInUp 1s ease forwards;
+      animation-delay: 1.6s;
+    }
+
+    .news__title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2.5em;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .news__title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 3px;
+      background-color: #DCC3A1;
+    }
+
+    .news__grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+    }
+
+    .news__item {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .news__item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .news__item-date {
+      font-size: 0.9em;
+      color: #DCC3A1;
+      margin-bottom: 10px;
+    }
+
+    .news__item-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.3em;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .news__item-desc {
+      font-size: 1em;
+      color: #444;
+    }
+
+    /* 底部連結 */
+    .footer {
+      background-color: #2C2C2C;
+      padding: 20px 0;
+    }
+
+    .footer__links {
+      display: flex;
+      justify-content: flex-end; /* 靠右對齊 */
+      gap: 20px; /* 縮小間距，保持整齊 */
+      padding-right: 20px; /* 右側內邊距 */
+    }
+
+    .footer__link {
+      color: #DCC3A1;
+      text-decoration: none;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      font-size: 0.9em; /* 縮小字體 */
+      transition: color 0.3s ease;
+    }
+
+    .footer__link:hover {
+      color: #fff;
+    }
+
+    /* 動畫 */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 響應式設計 */
+    @media (max-width: 1024px) {
+      .services__grid,
+      .case-studies__grid,
+      .news__grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .hero__title {
+        font-size: 2.2em;
+      }
+
+      .hero__subtitle {
+        font-size: 1.3em;
+      }
+
+      .about,
+      .services {
+        min-height: 500px;
+      }
+
+      .about__title,
+      .services__title {
+        font-size: 2.5em;
+      }
+
+      .about__content {
+        font-size: 1.2em;
+      }
+
+      .services__item-title {
+        font-size: 1.5em;
+      }
+
+      .services__item-desc {
+        font-size: 1em;
+      }
+
+      .case-studies__image {
+        max-height: 250px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .navbar__list {
+        gap: 15px;
+      }
+
+      .navbar__link {
+        font-size: 0.8em;
+      }
+
+      .hero {
+        padding: 50px 0;
+      }
+
+      .hero__title {
+        font-size: 1.8em;
+      }
+
+      .hero__subtitle {
+        font-size: 1.1em;
+      }
+
+      .services__grid,
+      .case-studies__grid,
+      .news__grid {
+        grid-template-columns: 1fr;
+      }
+
+      .about__title,
+      .services__title,
+      .testimonials__title,
+      .case-studies__title,
+      .faq__title,
+      .contact__title,
+      .map__title,
+      .news__title {
+        font-size: 2em;
+      }
+
+      .about,
+      .services {
+        min-height: 400px;
+        padding: 60px 0;
+      }
+
+      .about__content {
+        font-size: 1.1em;
+      }
+
+      .services__item {
+        padding: 30px;
+      }
+
+      .services__icon {
+        font-size: 2.5em;
+      }
+
+      .case-studies__image {
+        max-height: 200px;
+      }
+
+      .contact__form,
+      .contact__appointment form {
+        max-width: 100%;
+      }
+
+      .map__iframe {
+        height: 300px;
+      }
+
+      .footer__links {
+        gap: 15px;
+      }
+
+      .footer__link {
+        font-size: 0.8em;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .navbar__list {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-end; /* 手機模式下仍靠右 */
+      }
+
+      .hero__logo {
+        max-width: 200px;
+      }
+
+      .hero__title {
+        font-size: 1.5em;
+      }
+
+      .hero__subtitle {
+        font-size: 1em;
+      }
+
+      .hero__cta {
+        padding: 10px 20px;
+        font-size: 1em;
+      }
+
+      .about,
+      .services {
+        min-height: 300px;
+        padding: 40px 0;
+      }
+
+      .about__title,
+      .services__title {
+        font-size: 1.8em;
+      }
+
+      .about__content {
+        font-size: 1em;
+      }
+
+      .services__item {
+        padding: 20px;
+      }
+
+      .services__icon {
+        font-size: 2em;
+      }
+
+      .services__item-title {
+        font-size: 1.3em;
+      }
+
+      .services__item-desc {
+        font-size: 0.9em;
+      }
+
+      .case-studies__image {
+        max-height: 150px;
+      }
+
+      .footer__links {
+        flex-direction: column;
+        align-items: flex-end; /* 手機模式下仍靠右 */
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <nav class="navbar__list">
+      <a href="#about" class="navbar__link">關於我們</a>
+      <a href="#services" class="navbar__link">服務項目</a>
+      <a href="#testimonials" class="navbar__link">客戶推薦</a>
+      <a href="#case-studies" class="navbar__link">成功案例</a>
+      <a href="#faq" class="navbar__link">常見問題</a>
+      <a href="#contact" class="navbar__link">聯絡我們</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Hero 區塊 -->
+    <section class="hero">
+      <img src="https://i.imgur.com/hjX9Oie.jpg" alt="窩家好室 Logo" class="hero__logo">
+      <h1 class="hero__title">安心託付，穩定收租</h1>
+      <p class="hero__subtitle">專業的台北包租代管服務</p>
+      <button class="hero__cta">立即聯絡我們</button>
+    </section>
+
+    <!-- 關於我們 -->
+    <section class="about" id="about">
+      <h2 class="about__title">關於我們</h2>
+      <p class="about__content">
+        專注經營台北市中心精華地段，為屋主打造量身服務，從出租前的空間優化，到租後的專業管理，為您的不動產提升租金效益，穩健累積資產價值。讓您的房產，在最好的狀態下，被最合適的人珍惜使用。—— 窩家好室，為您守護每一分不動產價值。
+      </p>
+    </section>
+
+    <!-- 服務項目 -->
+    <section class="services" id="services">
+      <h2 class="services__title">服務項目</h2>
+      <div class="services__grid">
+        <div class="services__item">
+          <i class="fas fa-home services__icon"></i>
+          <h3 class="services__item-title">包租代管</h3>
+          <p class="services__item-desc">我們承租您的物業，負責轉租與管理，確保穩定租金收入，無空置風險，並提供一站式代管服務。</p>
+        </div>
+        <div class="services__item">
+          <i class="fas fa-paint-roller services__icon"></i>
+          <h3 class="services__item-title">空間規劃</h3>
+          <p class="services__item-desc">提供專業空間規劃建議，提升物業吸引力與價值，優化居住體驗。</p>
+        </div>
+        <div class="services__item">
+          <i class="fas fa-users services__icon"></i>
+          <h3 class="services__item-title">自有高端客戶租賃｜外派高管、外籍專業人士</h3>
+          <p class="services__item-desc">針對高端客戶、外派高管及外籍專業人士，提供專屬租賃服務，確保穩定且優質的租賃關係。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 客戶推薦 -->
+    <section class="testimonials" id="testimonials">
+      <h2 class="testimonials__title">客戶推薦</h2>
+      <div class="testimonials__carousel">
+        <div class="testimonials__slides" id="slides">
+          <div class="testimonials__slide">
+            <img src="https://via.placeholder.com/80" alt="客戶頭像" class="testimonials__avatar">
+            <h3 class="testimonials__name">陳先生</h3>
+            <p class="testimonials__quote">"窩家好室讓我的老房子煥然一新，租金收入穩定，真的很放心！"</p>
+          </div>
+          <div class="testimonials__slide">
+            <img src="https://via.placeholder.com/80" alt="客戶頭像" class="testimonials__avatar">
+            <h3 class="testimonials__name">林小姐</h3>
+            <p class="testimonials__quote">"他們的服務非常專業，從租客篩選到維修都一手包辦，省了我很多時間。"</p>
+          </div>
+          <div class="testimonials__slide">
+            <img src="https://via.placeholder.com/80" alt="客戶頭像" class="testimonials__avatar">
+            <h3 class="testimonials__name">王太太</h3>
+            <p class="testimonials__quote">"稅務問題一直很頭痛，窩家好室幫我解決了不少麻煩，值得信賴！"</p>
+          </div>
+        </div>
+        <button class="testimonials__nav testimonials__nav--prev" onclick="moveSlide(-1)">❮</button>
+        <button class="testimonials__nav testimonials__nav--next" onclick="moveSlide(1)">❯</button>
+      </div>
+    </section>
+
+    <!-- 成功案例 -->
+    <section class="case-studies" id="case-studies">
+      <h2 class="case-studies__title">成功案例</h2>
+      <div class="case-studies__grid">
+        <div class="case-studies__item">
+          <img src="https://via.placeholder.com/400x200" alt="房屋改造前後" class="case-studies__image">
+          <h3 class="case-studies__item-title">中山區老屋翻新</h3>
+          <p class="case-studies__item-desc">將40年老屋改造成現代化居住空間，租金提升20%，空置期縮短至1個月。</p>
+        </div>
+        <div class="case-studies__item">
+          <img src="https://i.imgur.com/WCIDbzE.jpg" alt="大安區套房優化案例" class="case-studies__image">
+          <h3 class="case-studies__item-title">大安區套房優化</h3>
+          <p class="case-studies__item-desc">透過空間規劃與修繕，吸引長期租客，租金收益增長15%。</p>
+        </div>
+        <div class="case-studies__item">
+          <img src="https://via.placeholder.com/400x200" alt="房屋改造前後" class="case-studies__image">
+          <h3 class="case-studies__item-title">松山區家庭住宅</h3>
+          <p class="case-studies__item-desc">提供裝修建議與代管服務，穩定出租給優質家庭，無空置風險。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 常見問題 -->
+    <section class="faq" id="faq">
+      <h2 class="faq__title">常見問題</h2>
+      <div class="faq__item">
+        <div class="faq__question">包租代管費用是多少？<span class="faq__toggle">+</span></div>
+        <div class="faq__answer">費用根據物業狀況與服務項目而定，通常為月租金的10%-15%，詳情請聯絡我們。</div>
+      </div>
+      <div class="faq__item">
+        <div class="faq__question">合約期限是多久？<span class="faq__toggle">+</span></div>
+        <div class="faq__answer">合約期限通常為1至5年，視您的需求可靈活調整。</div>
+      </div>
+      <div class="faq__item">
+        <div class="faq__question">維修責任由誰承擔？<span class="faq__toggle">+</span></div>
+        <div class="faq__answer">我們負責一般維修與管理，若涉及重大損壞，會與您協商處理方案。</div>
+      </div>
+    </section>
+
+    <!-- 聯絡我們 -->
+    <section class="contact" id="contact">
+      <h2 class="contact__title">聯絡我們</h2>
+      <form class="contact__form">
+        <input type="text" class="contact__input" placeholder="姓名" required>
+        <input type="tel" class="contact__input" placeholder="電話" required>
+        <input type="text" class="contact__input" placeholder="聯絡方式（如LINE ID或Email）" required>
+        <textarea class="contact__textarea" placeholder="留言內容" required></textarea>
+        <button type="submit" class="contact__submit">送出</button>
+      </form>
+      <div class="contact__appointment">
+        <h3>線上預約諮詢</h3>
+        <form id="appointment-form">
+          <input type="datetime-local" class="contact__input" required>
+          <button type="submit" class="contact__submit">確認預約</button>
+        </form>
+      </div>
+      <div class="contact__social">
+        <a href="https://www.facebook.com/wojia.housing" target="_blank" class="contact__social-link"><i class="fab fa-facebook-f"></i></a>
+        <a href="https://line.me/ti/p/@wojiahaoshi" target="_blank" class="contact__social-link"><i class="fab fa-line"></i></a>
+      </div>
+    </section>
+
+    <!-- 地圖嵌入 -->
+    <section class="map">
+      <h2 class="map__title">服務範圍</h2>
+      <iframe class="map__iframe" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3614.677188401289!2d121.51542931500624!3d25.034972983966853!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3442a93b6e6f5b5b%3A0x7f5d8f5a5a5a5a5a!2sTaipei%2C%20Taiwan!5e0!3m2!1sen!2stw!4v1625098765432!5m2!1sen!2stw" allowfullscreen="" loading="lazy"></iframe>
+    </section>
+
+    <!-- 新聞與更新 -->
+    <section class="news">
+      <h2 class="news__title">最新消息</h2>
+      <div class="news__grid">
+        <div class="news__item">
+          <div class="news__item-date">2025年5月3日</div>
+          <h3 class="news__item-title">台北租賃市場報告</h3>
+          <p class="news__item-desc">2025年第一季，台北市租金平均上漲5%，大安區尤為顯著，適合投資房產。</p>
+        </div>
+        <div class="news__item">
+          <div class="news__item-date">2025年4月15日</div>
+          <h3 class="news__item-title">新服務上線</h3>
+          <p class="news__item-desc">推出「快速出租計畫」，最快7天找到優質租客，立即體驗！</p>
+        </div>
+        <div class="news__item">
+          <div class="news__item-date">2025年3月20日</div>
+          <h3 class="news__item-title">客戶感謝活動</h3>
+          <p class="news__item-desc">感謝長期支持的房東，我們將舉辦免費租賃講座，歡迎報名參加。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 底部連結 -->
+  <footer class="footer">
+    <div class="footer__links">
+      <a href="https://www.facebook.com/wojia.housing" target="_blank" class="footer__link">FACEBOOK</a>
+      <a href="https://www.instagram.com/wojiahaoshi" target="_blank" class="footer__link">INSTAGRAM</a>
+      <a href="https://line.me/ti/p/@wojiahaoshi" target="_blank" class="footer__link">LINE</a>
+      <a href="tel:+886-2-12345678" class="footer__link">電話</a>
+    </div>
+  </footer>
+
+  <script>
+    // 輪播功能
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.testimonials__slide');
+    const totalSlides = slides.length;
+
+    function moveSlide(direction) {
+      currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+      const slidesContainer = document.getElementById('slides');
+      slidesContainer.style.transform = `translateX(-${currentSlide * 100}%)`;
+    }
+
+    setInterval(() => {
+      moveSlide(1);
+    }, 5000);
+
+    // FAQ 折疊功能
+    document.querySelectorAll('.faq__question').forEach(item => {
+      item.addEventListener('click', () => {
+        const parent = item.parentElement;
+        parent.classList.toggle('faq__item--active');
+      });
+    });
+
+    // 預約表單提交
+    document.getElementById('appointment-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      alert('預約成功！我們將儘快與您聯繫。');
+    });
+  </script>
+</body>
+</html>
